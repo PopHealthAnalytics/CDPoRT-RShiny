@@ -1,0 +1,29 @@
+version: "3.6"
+
+services:
+  
+  rstudio:
+    build: 
+      context: ./
+    container_name: rstudio
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: ./projects
+        target: /home/rstudio/projects
+      - type: volume
+        source: r_libs_n
+        target: /usr/local/lib/R
+    networks:
+      - cdprot
+    environment:
+      - PASSWORD=rstudio1
+      - DISABLE_AUTH=true
+    ports:
+      - 8852:8787
+
+networks:
+  cdprot:
+
+volumes:
+  r_libs_n:
