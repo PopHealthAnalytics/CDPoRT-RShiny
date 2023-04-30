@@ -29,11 +29,11 @@ merged <- process_csv("data/CDPORT export overall.csv")
 regions = deframe(merged %>% st_drop_geometry %>% select('Region Name', 'Region ID'))
 
 # age and sex tables for stratifying
-cdport_by_age <-
-  read.csv("data/CDPORT export age.csv") %>% mutate(!!WEIGHTED_ALIAS := weighted / 10000,!!MEAN_ALIAS := mean * 10000)
-cdport_by_sex <-
-  read.csv("data/CDPORT export sex.csv") %>% mutate(!!WEIGHTED_ALIAS := weighted / 10000,!!MEAN_ALIAS := mean * 10000)
+cdport_by_age <- read.csv("data/CDPORT export age.csv") %>% 
+                 mutate(!!WEIGHTED_ALIAS := weighted / 10000,!!MEAN_ALIAS := mean * 10000)
 
+cdport_by_sex <- read.csv("data/CDPORT export sex.csv") %>% 
+                 mutate(!!WEIGHTED_ALIAS := weighted / 10000,!!MEAN_ALIAS := mean * 10000)
 
 ui <- navbarPage(
   "CDPoRT",
@@ -81,7 +81,7 @@ ui <- navbarPage(
 )
 
 server <- function(input, output) {
-  user_csv <- reactive(input$user_csv)
+  user_csv <- reactive({input$user_csv})
   
   formatted_csv <- reactive({
     # https://shiny.rstudio.com/articles/req.html
@@ -89,26 +89,26 @@ server <- function(input, output) {
     process_csv(user_csv()$datapath)
   })
   
-  output$user_map <- renderTmap({
-    req(user_csv())
-    tm_shape(formatted_csv()) + tm_borders() + tm_fill(col = WEIGHTED_ALIAS, id =
-                                                         "Region Name")
-  })
-  
-  output$map <- renderTmap({
-    tm_shape(merged) + tm_borders() + tm_fill(col = WEIGHTED_ALIAS, id = "Region Name")
-  })
+  #FIXME - Causing problems with reactive elements
+  # output$user_map <- renderTmap({
+  #   req(user_csv())
+  #   tm_shape(formatted_csv()) + tm_borders() + tm_fill(col = WEIGHTED_ALIAS, id =
+  #                                                        "Region Name")
+  # })
+  # 
+  # output$map <- renderTmap({
+  #   tm_shape(merged) + tm_borders() + tm_fill(col = WEIGHTED_ALIAS, id = "Region Name")
+  # })
   
   overview = reactive(
     merged %>%
       st_drop_geometry %>%
-      select(
+      select(all_of(
         "PHU_ID",
         "Region Name",
         "Region ID",
         WEIGHTED_ALIAS,
-        MEAN_ALIAS
-      )
+        MEAN_ALIAS))
   )
   
   output$basic_table <- renderDataTable({
@@ -143,6 +143,6 @@ server <- function(input, output) {
                geom_bar(stat = "identity") + 
       theme(axis.title.x = element_blank(), axis.title.y = element_blank())
   })
-}
+} # end server 
 
 shinyApp(ui = ui, server = server)
