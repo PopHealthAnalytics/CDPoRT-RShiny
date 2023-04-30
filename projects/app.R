@@ -137,15 +137,25 @@ server <- function(input, output) {
     }
   })
   
+  stratified_table_palette = reactive({
+    if (input$plotX == "sex"){
+      c("#DB0085", "#0147AB")
+    } else {
+      c("#F2E4FD", "#D9ADFA", "#C585F7", "#6F2AF8", "#827892", "#878787", "#222222")
+    }
+  })
+  
   filtered_by_region = reactive({
     filter(stratified_table(), region == input$plotRegion)
   })
   
   output$user_plot <- renderPlot({
     ggplot(filtered_by_region(),
-           aes(x = filtered_by_region()[[input$plotX]], 
-               y = filtered_by_region()[[input$plotY]])) + 
-           geom_bar(stat = "identity") + 
+           aes(x = !!sym(input$plotX), 
+               y = filtered_by_region()[[input$plotY]],
+               fill = !!sym(input$plotX))) + 
+           geom_bar(stat = "identity", show.legend=FALSE) + 
+           scale_fill_manual(values=stratified_table_palette())+
            labs(x=str_to_title(input$plotX), y=input$plotY)+
            theme_bw()+
            theme(axis.title.x=element_text(face="bold"),
