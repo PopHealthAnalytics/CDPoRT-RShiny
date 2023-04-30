@@ -3,6 +3,7 @@ library(sf)
 library(dplyr)
 library(ggplot2)
 library(tibble)
+library(stringr)
 
 # The public health boundary file
 phub <- st_read("./data/public_health_unit_boundaries.geojson")
@@ -30,10 +31,14 @@ regions = deframe(merged %>% st_drop_geometry %>% select('Region Name', 'Region 
 
 # age and sex tables for stratifying
 cdport_by_age <- read.csv("data/CDPORT export age.csv") %>% 
-                 mutate(!!WEIGHTED_ALIAS := weighted / 10000,!!MEAN_ALIAS := mean * 10000)
+                 mutate(!!WEIGHTED_ALIAS := weighted / 10000,
+                        !!MEAN_ALIAS := mean * 10000)
 
 cdport_by_sex <- read.csv("data/CDPORT export sex.csv") %>% 
-                 mutate(!!WEIGHTED_ALIAS := weighted / 10000,!!MEAN_ALIAS := mean * 10000)
+                 mutate(!!WEIGHTED_ALIAS := weighted / 10000,
+                        !!MEAN_ALIAS := mean * 10000) %>% 
+                 mutate(sex = case_when(sex == 0 ~ "Female", 
+                                        sex == 1 ~ "Male"))
 
 ui <- navbarPage(
   "CDPoRT",
@@ -140,8 +145,11 @@ server <- function(input, output) {
     ggplot(filtered_by_region(),
            aes(x = filtered_by_region()[[input$plotX]], 
                y = filtered_by_region()[[input$plotY]])) + 
-               geom_bar(stat = "identity") + 
-      theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+           geom_bar(stat = "identity") + 
+           labs(x=str_to_title(input$plotX), y=input$plotY)+
+           theme_bw()+
+           theme(axis.title.x=element_text(face="bold"),
+                 axis.title.y=element_text(face="bold"))
   })
 } # end server 
 
