@@ -108,12 +108,10 @@ server <- function(input, output) {
   overview = reactive(
     merged %>%
       st_drop_geometry %>%
-      select(all_of(
-        "PHU_ID",
-        "Region Name",
-        "Region ID",
-        WEIGHTED_ALIAS,
-        MEAN_ALIAS))
+      select("Region Name",
+              WEIGHTED_ALIAS,
+              MEAN_ALIAS) %>% 
+      mutate_if(is.numeric, ~round(., digits=0))
   )
   
   output$basic_table <- renderDataTable({
