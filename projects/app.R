@@ -57,7 +57,13 @@ ui <- navbarPage(
                a("Canadian Community Health Survey (CCHS).", href="https://www23.statcan.gc.ca/imdb/p2SV.pl?Function=getSurvey&SDDS=3226"),
                "More information on CDPoRT can be found at",
                a("Ng et al. 2020 JAMA Network Open.", 
-                 href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2766780"))
+                 href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2766780")),
+             tags$video(src = "Video-Chapter1-Introduction.mp4", type = "video/mp4", width = "600", height = "360", controls = TRUE),
+             tags$video(src = "Video-Chapter2-Overview.mp4", type = "video/mp4", width = "600", height = "360", controls = TRUE)
+           )),
+           fluidRow(column(
+             12,
+             h3("About the creators:"), 
            )),
            fluidRow(column(
              6,
