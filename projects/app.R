@@ -42,6 +42,59 @@ cdport_by_sex <- read.csv("data/CDPORT export sex.csv") %>%
 
 ui <- navbarPage(
   "CDPoRT",
+  tabPanel(title = "About",
+           fluidRow(column(
+             12,
+             h3("Welcome to the Chronic Disease Population Risk Tool (CDPoRT) dashboard!"), 
+             p("Population-Based Prediction Tools (PoRTs), apply routinely collected population health data to a validated risk prediction 
+               model to estimate the number of new and existing cases in a population of interest for the purpose of: 
+               understanding distribution of risk in the population, intervention planning, resource planning, 
+               and facilitating decision-making and priority setting."),
+             p("CDPoRT is a validated sex-specific population based risk prediction tool that estimates the 10-year risk of 
+               chronic disease in the adult population. CDPoRT was developed with a robust internal (two types of internal validation) 
+               and external validation approach (in Manitoba). CDPoRT makes predictions based on risk factors routinely collected 
+               from the", 
+               a("Canadian Community Health Survey (CCHS).", href="https://www23.statcan.gc.ca/imdb/p2SV.pl?Function=getSurvey&SDDS=3226"),
+               "More information on CDPoRT can be found at",
+               a("Ng et al. 2020 JAMA Network Open.", 
+                 href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2766780"))
+           )),
+           fluidRow(column(
+             6,
+             h4("Population Health Analytics Lab (PHAL)"), 
+             p("The", 
+              a("PHAL's", href="https://pophealthanalytics.com/"),
+              "work draws from demographic, clinical, behavioural, social, and health outcomes information. From these sources, we gain a 
+               comprehensive perspective on population health, allowing us to inform decision-making related to improved health system performance, 
+               reduced inequities, and fiscal sustainability. Most importantly, we work directly with key health system decision makers, which maximizes the meaningfulness
+               of our studies, and enhances their real-world impact."),
+             p("The PHAL is based at the University of Toronto’s",
+               a("Dalla Lana School of Public Health", href="https://www.dlsph.utoronto.ca/"),
+               "— the largest public health school in Canada, with more than 800 faculty, 850 students, and research and training partnerships with institutions throughout Toronto and the world. 
+               With $34.4 million in research funding per year, the School supports discovery in global health, tobacco impacts on health, occupational disease and disability, air pollution, 
+               inner city and Indigenous health, among many other areas."),
+             p("< ADD LOGO >")
+           ),
+           column(
+             6,
+             h4("Human Factors & Applied Statistics Lab (HFASt)"),
+             p("The",
+               a("HFASt Lab", href="https://hfast.mie.utoronto.ca/"), 
+               "conducts research on understanding and improving human behaviour and performance in multi-task and complex situations, using a wide range of analytical techniques. 
+               The application areas include surface transportation, healthcare, mining, and unmanned vehicle supervisory control."),
+             p("The HFASt Lab is based at the University of Toronto's",
+               a("Faculty of Applied Science & Engineering", href="https://www.engineering.utoronto.ca/"),
+               "— the top engineering school in Canada, with more than 280 faculty, 8000 students, and 400+ collaborating industrial research partners worldwide.  With $108.6 
+               million in research funding, the Faculty supports research guided by 6 innovation clusters including advanced manufacturing, data analytics & artificial intelligence, 
+               human health, robotics, sustainability, and water."),
+             p("< ADD LOGO >")
+           )),
+           fluidRow(column(
+             12,
+             h3("The development of CDPoRT was generously supported by:"), 
+             p("..."),
+           )),
+          ),
   tabPanel(title = "Upload demo",
            fluidRow(column(
              12, fileInput(
@@ -105,14 +158,14 @@ server <- function(input, output) {
   #   tm_shape(merged) + tm_borders() + tm_fill(col = WEIGHTED_ALIAS, id = "Region Name")
   # })
   
-  overview = reactive(
+  overview = reactive({
     merged %>%
       st_drop_geometry %>%
       select("Region Name",
               WEIGHTED_ALIAS,
               MEAN_ALIAS) %>% 
       mutate_if(is.numeric, ~round(., digits=0))
-  )
+  })
   
   output$basic_table <- renderDataTable({
     overview()
