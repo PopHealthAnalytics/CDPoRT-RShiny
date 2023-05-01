@@ -42,6 +42,7 @@ cdport_by_sex <- read.csv("data/CDPORT export sex.csv") %>%
 
 ui <- navbarPage(
   "CDPoRT",
+  # About page ----
   tabPanel(title = "About",
            fluidRow(column(
              12,
@@ -57,7 +58,8 @@ ui <- navbarPage(
                a("Canadian Community Health Survey (CCHS).", href="https://www23.statcan.gc.ca/imdb/p2SV.pl?Function=getSurvey&SDDS=3226"),
                "More information on CDPoRT can be found at",
                a("Ng et al. 2020 JAMA Network Open.", 
-                 href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2766780")),
+                 href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2766780"),
+               "Below, you can find two video explanations of CDPoRT."),
              tags$video(src = "Video-Chapter1-Introduction.mp4", type = "video/mp4", width = "600", height = "360", controls = TRUE),
              tags$video(src = "Video-Chapter2-Overview.mp4", type = "video/mp4", width = "600", height = "360", controls = TRUE)
            )),
@@ -118,6 +120,7 @@ ui <- navbarPage(
                  img(src = "Logo-MIE.png", width = "450px", height = "100px"))
            )),
           ),
+  # Upload demo page ----
   tabPanel(title = "Upload demo",
            fluidRow(column(
              12, fileInput(
@@ -129,6 +132,7 @@ ui <- navbarPage(
              12,
              tmapOutput("user_map")
            )), ),
+  # Overview page----
   tabPanel(title = "Overview",
            fluidRow(column(
              12, div(style = "margin-bottom: 3px", downloadButton("download_overview"))
@@ -136,7 +140,9 @@ ui <- navbarPage(
            fluidRow(column(
              12, dataTableOutput("basic_table")
            ))),
+  # Geography page ----
   tabPanel(title = "Explore by Geography", tmapOutput("map")),
+  # Stratified view page ----
   tabPanel(title = "Stratified", fluidPage(
     fluidRow(
       column(4,
@@ -159,7 +165,7 @@ ui <- navbarPage(
     ),
     fluidRow(column(12, plotOutput('user_plot')))
   ), )
-)
+) # End defining UI ----
 
 server <- function(input, output) {
   user_csv <- reactive({input$user_csv})
@@ -235,6 +241,6 @@ server <- function(input, output) {
            theme(axis.title.x=element_text(face="bold"),
                  axis.title.y=element_text(face="bold"))
   })
-} # end server 
+} #End server 
 
 shinyApp(ui = ui, server = server)
