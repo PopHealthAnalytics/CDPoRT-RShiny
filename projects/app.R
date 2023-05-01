@@ -73,7 +73,7 @@ ui <- navbarPage(
                "— the largest public health school in Canada, with more than 800 faculty, 850 students, and research and training partnerships with institutions throughout Toronto and the world. 
                With $34.4 million in research funding per year, the School supports discovery in global health, tobacco impacts on health, occupational disease and disability, air pollution, 
                inner city and Indigenous health, among many other areas."),
-             p("< ADD LOGO >")
+             img(src = "Logo-PHAL.png",  width = "600px", height = "100")
            ),
            column(
              6,
@@ -87,13 +87,19 @@ ui <- navbarPage(
                "— the top engineering school in Canada, with more than 280 faculty, 8000 students, and 400+ collaborating industrial research partners worldwide.  With $108.6 
                million in research funding, the Faculty supports research guided by 6 innovation clusters including advanced manufacturing, data analytics & artificial intelligence, 
                human health, robotics, sustainability, and water."),
-             p("< ADD LOGO >")
+             img(src = "Logo-HFast.png", width="600px", height="175")
            )),
            fluidRow(column(
              12,
              h3("The development of CDPoRT was generously supported by:"), 
              p("..."),
            )),
+           fluidRow(column(
+             12,
+             h3("Contact:"), 
+             p("If you have questions about CDPoRT please reach out to",
+               a("pophealthanalytics.dlsph@utoronto.ca", href="mailto: pophealthanalytics.dlsph@utoronto.ca"))
+           )), 
           ),
   tabPanel(title = "Upload demo",
            fluidRow(column(
