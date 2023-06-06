@@ -202,15 +202,14 @@ server <- function(input, output) {
   
   output$user_map <- renderTmap({
     req(user_csv())
-    tm_shape(formatted_csv()) + tm_borders() + tm_fill(col = WEIGHTED_ALIAS, id =
-                                                         "Region Name")
+    tm_shape(formatted_csv()) + tm_borders() + tm_fill(col = WEIGHTED_ALIAS, id ="Region Name")
   })
 
   output$map <- renderTmap({
     if (input$map_var == "Cases"){
-      tm_shape(merged) + tm_borders() + tm_fill(col = WEIGHTED_ALIAS, id = "Region Name")
+      tm_shape(merged) + tm_borders() + tm_fill(col = WEIGHTED_ALIAS, id = "Region Name", palette = "-magma")
     }else{
-      tm_shape(merged) + tm_borders() + tm_fill(col = MEAN_ALIAS, id = "Region Name")
+      tm_shape(merged) + tm_borders() + tm_fill(col = MEAN_ALIAS, id = "Region Name", palette = "-magma")
     }
   })
   
