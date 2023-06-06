@@ -119,7 +119,7 @@ ui <- navbarPage(
                  div(style = "margin-right: 50px",
                      img(src = "Logo-FASE.png", width = "600px", height = "100px")),
                  img(src = "Logo-MIE.png", width = "450px", height = "100px"))
-           )),
+           ))
           ),
   # Upload demo page ----
   tabPanel(title = "Upload demo",
@@ -136,7 +136,7 @@ ui <- navbarPage(
            fluidRow(column(
              12,
              tmapOutput("user_map")
-           )), ),
+           ))),
   # Overview page----
   tabPanel(title = "Overview",
            fluidRow(column(
