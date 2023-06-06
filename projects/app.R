@@ -235,7 +235,7 @@ server <- function(input, output) {
     p <- ggplot(filtered_by_region(),
            aes(x = !!sym(input$plotX), 
                y = filtered_by_region()[[input$plotY]],
-               text = paste("Number of New Cases (1000s): ",
+               text = paste(input$plotY,":",
                             filtered_by_region()[[input$plotY]]),
                fill = !!sym(input$plotX))) + 
            geom_bar(stat = "identity", show.legend=FALSE) + 
