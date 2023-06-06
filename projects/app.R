@@ -124,9 +124,13 @@ ui <- navbarPage(
   # Upload demo page ----
   tabPanel(title = "Upload demo",
            fluidRow(column(
+             12,
+             p("RShiny dashboards are interactive. Upload a pre-processed CSV file from your computer to see a map.")
+           )),
+           fluidRow(column(
              12, fileInput(
                inputId = "user_csv",
-               label = h3("Upload a preprocessed csv to see a map")
+               label = h3("CSV Upload")
              )
            )),
            fluidRow(column(
@@ -136,15 +140,28 @@ ui <- navbarPage(
   # Overview page----
   tabPanel(title = "Overview",
            fluidRow(column(
+             12,
+             p("Summary of the projected number of new cases and ten-year risk for chronic diseases in each 
+               health region and Ontario as a whole. By default, health regions are sorted alphabetically, but 
+               you can also sort by cases and risk by clicking on the arrows to the right of each column name.")
+           )),
+           fluidRow(column(
              12, div(style = "margin-bottom: 3px", downloadButton("download_overview"))
            )),
            fluidRow(column(
              12, dataTableOutput("basic_table")
            ))),
   # Geography page ----
-  tabPanel(title = "Explore by Geography", tmapOutput("map")),
+  tabPanel(title = "Explore by Geography", 
+           radioButtons(inputId = "map_var" , label = "Select the variable to map", choices = c("Cases", "Risk")),
+           tmapOutput("map")),
   # Stratified view page ----
   tabPanel(title = "Stratified", fluidPage(
+    fluidRow(column(
+      12,
+      p("View chronic disease projections within each health region and Ontario as a whole stratified by age and sex.
+         Use the drop-down menus to select your region, stratifier, and metric of interest.")
+    )),
     fluidRow(
       column(4,
              selectInput(
@@ -178,16 +195,19 @@ server <- function(input, output) {
     process_csv(user_csv()$datapath)
   })
   
-  #FIXME - Causing problems with reactive elements
-  # output$user_map <- renderTmap({
-  #   req(user_csv())
-  #   tm_shape(formatted_csv()) + tm_borders() + tm_fill(col = WEIGHTED_ALIAS, id =
-  #                                                        "Region Name")
-  # })
-  # 
-  # output$map <- renderTmap({
-  #   tm_shape(merged) + tm_borders() + tm_fill(col = WEIGHTED_ALIAS, id = "Region Name")
-  # })
+  output$user_map <- renderTmap({
+    req(user_csv())
+    tm_shape(formatted_csv()) + tm_borders() + tm_fill(col = WEIGHTED_ALIAS, id =
+                                                         "Region Name")
+  })
+
+  output$map <- renderTmap({
+    if (input$map_var == "Cases"){
+      tm_shape(merged) + tm_borders() + tm_fill(col = WEIGHTED_ALIAS, id = "Region Name")
+    }else{
+      tm_shape(merged) + tm_borders() + tm_fill(col = MEAN_ALIAS, id = "Region Name")
+    }
+  })
   
   overview = reactive({
     merged %>%
