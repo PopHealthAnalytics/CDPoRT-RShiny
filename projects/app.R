@@ -152,7 +152,12 @@ ui <- navbarPage(
              12, dataTableOutput("basic_table")
            ))),
   # Geography page ----
-  tabPanel(title = "Explore by Geography", 
+  tabPanel(title = "Explore by Geography",
+           fluidRow(column(
+             12,
+             p("Maps make it easy to compare regions at a glance. Select your metric of interest using the radio 
+                buttons. Hover over a region to see it's name and click to see the value.")
+           )),
            radioButtons(inputId = "map_var" , label = "Select the variable to map", choices = c("Cases", "Risk")),
            tmapOutput("map")),
   # Stratified view page ----
