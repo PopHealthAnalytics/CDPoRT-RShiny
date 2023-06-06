@@ -164,7 +164,8 @@ ui <- navbarPage(
                     choices = regions)
       ),
     ),
-    fluidRow(column(12, plotlyOutput('user_plot')))
+    fluidRow(column(12, plotlyOutput('user_plot'))),
+    fluidRow(column(12, dataTableOutput('stratified_table')))
   ), )
 ) # End defining UI ----
 
@@ -244,6 +245,15 @@ server <- function(input, output) {
            theme(axis.title.x=element_text(face="bold"),
                  axis.title.y=element_text(face="bold"))
     ggplotly(p, tooltip = "text")
+  })
+  
+  output$stratified_table <- renderDataTable({
+   stratified_table() %>% 
+      filter(region == input$plotRegion) %>% 
+      select(-c(region, weighted, mean)) %>%
+      rename_at(c(1), .funs=str_to_title) %>% 
+      select(1, input$plotY)
+     
   })
 } #End server 
 
