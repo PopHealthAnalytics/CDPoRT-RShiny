@@ -2,6 +2,7 @@ library(tmap)
 library(sf)
 library(dplyr)
 library(ggplot2)
+library(plotly)
 library(tibble)
 library(stringr)
 
@@ -163,7 +164,7 @@ ui <- navbarPage(
                     choices = regions)
       ),
     ),
-    fluidRow(column(12, plotOutput('user_plot')))
+    fluidRow(column(12, plotlyOutput('user_plot')))
   ), )
 ) # End defining UI ----
 
@@ -229,17 +230,20 @@ server <- function(input, output) {
     filter(stratified_table(), region == input$plotRegion)
   })
   
-  output$user_plot <- renderPlot({
-    ggplot(filtered_by_region(),
+  output$user_plot <- renderPlotly({
+    p <- ggplot(filtered_by_region(),
            aes(x = !!sym(input$plotX), 
                y = filtered_by_region()[[input$plotY]],
+               text = paste("Number of New Cases (1000s): ",
+                            filtered_by_region()[[input$plotY]]),
                fill = !!sym(input$plotX))) + 
            geom_bar(stat = "identity", show.legend=FALSE) + 
            scale_fill_manual(values=stratified_table_palette())+
            labs(x=str_to_title(input$plotX), y=input$plotY)+
-           theme_bw()+
+           theme_bw()+theme(legend.position='none')+
            theme(axis.title.x=element_text(face="bold"),
                  axis.title.y=element_text(face="bold"))
+    ggplotly(p, tooltip = "text")
   })
 } #End server 
 
