@@ -32,6 +32,10 @@ regions <- deframe(merged %>% st_drop_geometry %>%
                               select('Region Name', 'Region ID') %>% 
                               arrange(`Region Name`)) 
 
+comparator_regions <- regions 
+comparator_regions[35] <- "Ontario"
+comparator_regions[36] <- "None"
+
 # age and sex tables for stratifying
 cdport_by_age <- read.csv("data/CDPORT export age.csv") %>% 
                  mutate(!!WEIGHTED_ALIAS := weighted / 10000,
@@ -168,8 +172,15 @@ ui <- navbarPage(
       column(
         4,
         selectInput("plotRegion",
-                    label = "Select Region",
+                    label = "Select Primary Region",
                     choices = regions)
+      ),
+      column(
+        4,
+        selectInput("comparatorRegion",
+                    label = "Select Comparator Region",
+                    choices = comparator_regions,
+                    selected = "None")
       ),
     ),
     fluidRow(column(12, plotlyOutput('user_plot'))),
@@ -242,19 +253,43 @@ server <- function(input, output) {
     filter(stratified_table(), region == input$plotRegion)
   })
   
+  filtered_by_region2 <- reactive({
+    filter(stratified_table(), region == input$comparatorRegion)
+  })
+  
   output$user_plot <- renderPlotly({
-    p <- ggplot(filtered_by_region(),
-           aes(x = !!sym(input$plotX), 
-               y = filtered_by_region()[[input$plotY]],
-               text = paste(input$plotY,":",
-                            filtered_by_region()[[input$plotY]]),
-               fill = !!sym(input$plotX))) + 
-           geom_bar(stat = "identity", show.legend=FALSE) + 
-           scale_fill_manual(values=stratified_table_palette())+
-           labs(x=str_to_title(input$plotX), y=input$plotY)+
-           theme_bw()+theme(legend.position='none')+
-           theme(axis.title.x=element_text(face="bold"),
-                 axis.title.y=element_text(face="bold"))
+    if(input$comparatorRegion == "None"){
+      p <- ggplot(filtered_by_region(),
+                  aes(x = !!sym(input$plotX), 
+                      y = filtered_by_region()[[input$plotY]],
+                      text = paste(input$plotY,":",
+                                   filtered_by_region()[[input$plotY]]),
+                      fill = !!sym(input$plotX))) + 
+        geom_bar(stat = "identity", show.legend=FALSE) + 
+        scale_fill_manual(values=stratified_table_palette())+
+        labs(x=str_to_title(input$plotX), y=input$plotY)+
+        theme_bw()+theme(legend.position='none')+
+        theme(axis.title.x=element_text(face="bold"),
+              axis.title.y=element_text(face="bold"))
+      
+    }else{
+      combined <- rbind(filtered_by_region(), filtered_by_region2()) %>% 
+                  mutate(region_alias = case_when(region == input$plotRegion ~ "Primary",
+                                                  region == input$comparatorRegion ~ "Comparator"))
+      p <- ggplot(combined,
+                  aes(x = !!sym(input$plotX), 
+                      y = !!sym(input$plotY),
+                      text = paste(input$plotY,":",
+                                   combined[[input$plotY]]),
+                      group = region_alias,
+                      fill= as.factor(region_alias))) +
+        geom_bar(position="dodge", stat="identity")+
+        scale_fill_manual(values=c("darkgreen", "grey"),
+                          name="Region")+
+        theme_bw() + theme(legend.position = 'top')+
+        labs(x=str_to_title(input$plotX), y=input$plotY, fill="")
+                  
+    }
     ggplotly(p, tooltip = "text")
   })
   
