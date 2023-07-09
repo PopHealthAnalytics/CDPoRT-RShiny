@@ -121,22 +121,6 @@ ui <- navbarPage(
                  img(src = "Logo-MIE.png", width = "450px", height = "100px"))
            ))
           ),
-  # Upload demo page ----
-  tabPanel(title = "Upload demo",
-           fluidRow(column(
-             12,
-             p("RShiny dashboards are interactive. Upload a pre-processed CSV file from your computer to see a map.")
-           )),
-           fluidRow(column(
-             12, fileInput(
-               inputId = "user_csv",
-               label = h3("CSV Upload")
-             )
-           )),
-           fluidRow(column(
-             12,
-             tmapOutput("user_map")
-           ))),
   # Overview page----
   tabPanel(title = "Overview",
            fluidRow(column(
