@@ -294,12 +294,17 @@ server <- function(input, output) {
   })
   
   output$stratified_table <- renderDataTable({
-   stratified_table() %>% 
-      filter(region == input$plotRegion) %>% 
-      select(-c(region, weighted, mean)) %>%
-      rename_at(c(1), .funs=str_to_title) %>% 
-      select(1, input$plotY)
-     
+   if(input$comparatorRegion == "None"){  
+     stratified_table() %>% 
+       filter(region == input$plotRegion) %>% 
+       select(-c(region, weighted, mean)) %>%
+       rename_at(c(1,2), .funs=str_to_title) 
+   }else{
+     stratified_table() %>% 
+       filter(region %in% c(input$plotRegion, input$comparatorRegion)) %>% 
+       select(-c(weighted, mean)) %>% 
+       rename_at(c(1,2), .funs=str_to_title)
+   }
   })
   
   observe({
