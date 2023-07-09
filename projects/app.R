@@ -20,15 +20,17 @@ process_csv <- function(filepath) {
   # construct merge columns from last 2 digits of PHU_ID and last 2 digits of region
   user_csv$short_id <- substr(user_csv$region, 4, 5)
   phub$short_id <- substr(phub$PHU_ID, 3, 4)
-  merged <- merge(phub, user_csv, by = 'short_id')
-  merged %>%
-    rename("Region Name" = "NAME_ENG", "Region ID" = "region") %>%
-    mutate(!!WEIGHTED_ALIAS := weighted / 10000,!!MEAN_ALIAS := mean * 10000)
+  merged <- merge(phub, user_csv, by = 'short_id') %>%
+            rename("Region Name" = "NAME_ENG", "Region ID" = "region") %>%
+            mutate(!!WEIGHTED_ALIAS := weighted / 10000,!!MEAN_ALIAS := mean * 10000) %>% 
+            arrange(`Region Name`)
 }
 
-merged <- process_csv("data/CDPORT export overall.csv")
+merged <- process_csv("./data/CDPORT export overall.csv")
 
-regions = deframe(merged %>% st_drop_geometry %>% select('Region Name', 'Region ID'))
+regions <- deframe(merged %>% st_drop_geometry %>% 
+                              select('Region Name', 'Region ID') %>% 
+                              arrange(`Region Name`)) 
 
 # age and sex tables for stratifying
 cdport_by_age <- read.csv("data/CDPORT export age.csv") %>% 
@@ -197,13 +199,14 @@ server <- function(input, output) {
     }
   })
   
-  overview = reactive({
+  overview <- reactive({
     merged %>%
       st_drop_geometry %>%
       select("Region Name",
               WEIGHTED_ALIAS,
               MEAN_ALIAS) %>% 
-      mutate_if(is.numeric, ~round(., digits=0))
+      mutate_if(is.numeric, ~round(., digits=0)) %>% 
+      arrange(`Region Name`)
   })
   
   output$basic_table <- renderDataTable({
@@ -219,7 +222,7 @@ server <- function(input, output) {
     }
   )
   
-  stratified_table = reactive({
+  stratified_table <- reactive({
     if (input$plotX == "sex") {
       cdport_by_sex
     } else {
@@ -227,7 +230,7 @@ server <- function(input, output) {
     }
   })
   
-  stratified_table_palette = reactive({
+  stratified_table_palette <- reactive({
     if (input$plotX == "sex"){
       c("#DB0085", "#0147AB")
     } else {
@@ -235,7 +238,7 @@ server <- function(input, output) {
     }
   })
   
-  filtered_by_region = reactive({
+  filtered_by_region <- reactive({
     filter(stratified_table(), region == input$plotRegion)
   })
   
