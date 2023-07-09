@@ -263,6 +263,11 @@ server <- function(input, output) {
       select(1, input$plotY)
      
   })
+  
+  observe({
+    showNotification("Note - Maps can take a few seconds to load!", type = "warning")
+  })
+  
 } #End server 
 
 shinyApp(ui = ui, server = server)
