@@ -36,6 +36,13 @@ comparator_regions <- regions
 comparator_regions[35] <- "Ontario"
 comparator_regions[36] <- "None"
 
+region_num_to_name_LUT <- merged %>% st_drop_geometry %>% 
+                                     select('Region Name', 'Region ID') %>% 
+                                     arrange(`Region Name`)
+
+region_num_to_name_LUT$`Region ID` <- as.character(region_num_to_name_LUT$`Region ID`)
+region_num_to_name_LUT <- rbind(region_num_to_name_LUT, c("Ontario", "Ontario"))
+
 # age and sex tables for stratifying
 cdport_by_age <- read.csv("data/CDPORT export age.csv") %>% 
                  mutate(!!WEIGHTED_ALIAS := weighted / 10000,
@@ -273,16 +280,20 @@ server <- function(input, output) {
               axis.title.y=element_text(face="bold"))
       
     }else{
+      
+      plotRegion_name <- region_num_to_name_LUT$`Region Name`[which(region_num_to_name_LUT$`Region ID` == input$plotRegion)]
+      comparatorRegion_name <- region_num_to_name_LUT$`Region Name`[which(region_num_to_name_LUT$`Region ID` == input$comparatorRegion)]
+      
       combined <- rbind(filtered_by_region(), filtered_by_region2()) %>% 
-                  mutate(region_alias = case_when(region == input$plotRegion ~ "Primary",
-                                                  region == input$comparatorRegion ~ "Comparator"))
+                  mutate(region = case_when(region == input$plotRegion ~ plotRegion_name,
+                                            region == input$comparatorRegion ~ comparatorRegion_name))
       p <- ggplot(combined,
                   aes(x = !!sym(input$plotX), 
                       y = !!sym(input$plotY),
                       text = paste(input$plotY,":",
                                    combined[[input$plotY]]),
-                      group = region_alias,
-                      fill= as.factor(region_alias))) +
+                      group = region,
+                      fill= as.factor(region))) +
         geom_bar(position="dodge", stat="identity")+
         scale_fill_manual(values=c("darkgreen", "grey"),
                           name="Region")+
@@ -300,8 +311,14 @@ server <- function(input, output) {
        select(-c(region, weighted, mean)) %>%
        rename_at(c(1,2), .funs=str_to_title) 
    }else{
+     
+     plotRegion_name <- region_num_to_name_LUT$`Region Name`[which(region_num_to_name_LUT$`Region ID` == input$plotRegion)]
+     comparatorRegion_name <- region_num_to_name_LUT$`Region Name`[which(region_num_to_name_LUT$`Region ID` == input$comparatorRegion)]
+     
      stratified_table() %>% 
-       filter(region %in% c(input$plotRegion, input$comparatorRegion)) %>% 
+       filter(region %in% c(input$plotRegion, input$comparatorRegion)) %>%
+       mutate(region = case_when(region == input$plotRegion ~ plotRegion_name,
+                                 region == input$comparatorRegion ~ comparatorRegion_name)) %>% 
        select(-c(weighted, mean)) %>% 
        rename_at(c(1,2), .funs=str_to_title)
    }
