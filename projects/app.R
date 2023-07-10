@@ -20,15 +20,28 @@ process_csv <- function(filepath) {
   # construct merge columns from last 2 digits of PHU_ID and last 2 digits of region
   user_csv$short_id <- substr(user_csv$region, 4, 5)
   phub$short_id <- substr(phub$PHU_ID, 3, 4)
-  merged <- merge(phub, user_csv, by = 'short_id')
-  merged %>%
-    rename("Region Name" = "NAME_ENG", "Region ID" = "region") %>%
-    mutate(!!WEIGHTED_ALIAS := weighted / 10000,!!MEAN_ALIAS := mean * 10000)
+  merged <- merge(phub, user_csv, by = 'short_id') %>%
+            rename("Region Name" = "NAME_ENG", "Region ID" = "region") %>%
+            mutate(!!WEIGHTED_ALIAS := weighted / 10000,!!MEAN_ALIAS := mean * 10000) %>% 
+            arrange(`Region Name`)
 }
 
-merged <- process_csv("data/CDPORT export overall.csv")
+merged <- process_csv("./data/CDPORT export overall.csv")
 
-regions = deframe(merged %>% st_drop_geometry %>% select('Region Name', 'Region ID'))
+regions <- deframe(merged %>% st_drop_geometry %>% 
+                              select('Region Name', 'Region ID') %>% 
+                              arrange(`Region Name`)) 
+
+comparator_regions <- regions 
+comparator_regions[35] <- "Ontario"
+comparator_regions[36] <- "None"
+
+region_num_to_name_LUT <- merged %>% st_drop_geometry %>% 
+                                     select('Region Name', 'Region ID') %>% 
+                                     arrange(`Region Name`)
+
+region_num_to_name_LUT$`Region ID` <- as.character(region_num_to_name_LUT$`Region ID`)
+region_num_to_name_LUT <- rbind(region_num_to_name_LUT, c("Ontario", "Ontario"))
 
 # age and sex tables for stratifying
 cdport_by_age <- read.csv("data/CDPORT export age.csv") %>% 
@@ -121,22 +134,6 @@ ui <- navbarPage(
                  img(src = "Logo-MIE.png", width = "450px", height = "100px"))
            ))
           ),
-  # Upload demo page ----
-  tabPanel(title = "Upload demo",
-           fluidRow(column(
-             12,
-             p("RShiny dashboards are interactive. Upload a pre-processed CSV file from your computer to see a map.")
-           )),
-           fluidRow(column(
-             12, fileInput(
-               inputId = "user_csv",
-               label = h3("CSV Upload")
-             )
-           )),
-           fluidRow(column(
-             12,
-             tmapOutput("user_map")
-           ))),
   # Overview page----
   tabPanel(title = "Overview",
            fluidRow(column(
@@ -182,8 +179,15 @@ ui <- navbarPage(
       column(
         4,
         selectInput("plotRegion",
-                    label = "Select Region",
+                    label = "Select Primary Region",
                     choices = regions)
+      ),
+      column(
+        4,
+        selectInput("comparatorRegion",
+                    label = "Select Comparator Region",
+                    choices = comparator_regions,
+                    selected = "None")
       ),
     ),
     fluidRow(column(12, plotlyOutput('user_plot'))),
@@ -213,13 +217,14 @@ server <- function(input, output) {
     }
   })
   
-  overview = reactive({
+  overview <- reactive({
     merged %>%
       st_drop_geometry %>%
       select("Region Name",
               WEIGHTED_ALIAS,
               MEAN_ALIAS) %>% 
-      mutate_if(is.numeric, ~round(., digits=0))
+      mutate_if(is.numeric, ~round(., digits=0)) %>% 
+      arrange(`Region Name`)
   })
   
   output$basic_table <- renderDataTable({
@@ -235,7 +240,7 @@ server <- function(input, output) {
     }
   )
   
-  stratified_table = reactive({
+  stratified_table <- reactive({
     if (input$plotX == "sex") {
       cdport_by_sex
     } else {
@@ -243,7 +248,7 @@ server <- function(input, output) {
     }
   })
   
-  stratified_table_palette = reactive({
+  stratified_table_palette <- reactive({
     if (input$plotX == "sex"){
       c("#DB0085", "#0147AB")
     } else {
@@ -251,34 +256,78 @@ server <- function(input, output) {
     }
   })
   
-  filtered_by_region = reactive({
+  filtered_by_region <- reactive({
     filter(stratified_table(), region == input$plotRegion)
   })
   
+  filtered_by_region2 <- reactive({
+    filter(stratified_table(), region == input$comparatorRegion)
+  })
+  
   output$user_plot <- renderPlotly({
-    p <- ggplot(filtered_by_region(),
-           aes(x = !!sym(input$plotX), 
-               y = filtered_by_region()[[input$plotY]],
-               text = paste(input$plotY,":",
-                            filtered_by_region()[[input$plotY]]),
-               fill = !!sym(input$plotX))) + 
-           geom_bar(stat = "identity", show.legend=FALSE) + 
-           scale_fill_manual(values=stratified_table_palette())+
-           labs(x=str_to_title(input$plotX), y=input$plotY)+
-           theme_bw()+theme(legend.position='none')+
-           theme(axis.title.x=element_text(face="bold"),
-                 axis.title.y=element_text(face="bold"))
+    if(input$comparatorRegion == "None"){
+      p <- ggplot(filtered_by_region(),
+                  aes(x = !!sym(input$plotX), 
+                      y = filtered_by_region()[[input$plotY]],
+                      text = paste(input$plotY,":",
+                                   filtered_by_region()[[input$plotY]]),
+                      fill = !!sym(input$plotX))) + 
+        geom_bar(stat = "identity", show.legend=FALSE) + 
+        scale_fill_manual(values=stratified_table_palette())+
+        labs(x=str_to_title(input$plotX), y=input$plotY)+
+        theme_bw()+theme(legend.position='none')+
+        theme(axis.title.x=element_text(face="bold"),
+              axis.title.y=element_text(face="bold"))
+      
+    }else{
+      
+      plotRegion_name <- region_num_to_name_LUT$`Region Name`[which(region_num_to_name_LUT$`Region ID` == input$plotRegion)]
+      comparatorRegion_name <- region_num_to_name_LUT$`Region Name`[which(region_num_to_name_LUT$`Region ID` == input$comparatorRegion)]
+      
+      combined <- rbind(filtered_by_region(), filtered_by_region2()) %>% 
+                  mutate(region = case_when(region == input$plotRegion ~ plotRegion_name,
+                                            region == input$comparatorRegion ~ comparatorRegion_name))
+      p <- ggplot(combined,
+                  aes(x = !!sym(input$plotX), 
+                      y = !!sym(input$plotY),
+                      text = paste(input$plotY,":",
+                                   combined[[input$plotY]]),
+                      group = region,
+                      fill= as.factor(region))) +
+        geom_bar(position="dodge", stat="identity")+
+        scale_fill_manual(values=c("darkgreen", "grey"),
+                          name="Region")+
+        theme_bw() + theme(legend.position = 'top')+
+        labs(x=str_to_title(input$plotX), y=input$plotY, fill="")
+                  
+    }
     ggplotly(p, tooltip = "text")
   })
   
   output$stratified_table <- renderDataTable({
-   stratified_table() %>% 
-      filter(region == input$plotRegion) %>% 
-      select(-c(region, weighted, mean)) %>%
-      rename_at(c(1), .funs=str_to_title) %>% 
-      select(1, input$plotY)
+   if(input$comparatorRegion == "None"){  
+     stratified_table() %>% 
+       filter(region == input$plotRegion) %>% 
+       select(-c(region, weighted, mean)) %>%
+       rename_at(c(1,2), .funs=str_to_title) 
+   }else{
      
+     plotRegion_name <- region_num_to_name_LUT$`Region Name`[which(region_num_to_name_LUT$`Region ID` == input$plotRegion)]
+     comparatorRegion_name <- region_num_to_name_LUT$`Region Name`[which(region_num_to_name_LUT$`Region ID` == input$comparatorRegion)]
+     
+     stratified_table() %>% 
+       filter(region %in% c(input$plotRegion, input$comparatorRegion)) %>%
+       mutate(region = case_when(region == input$plotRegion ~ plotRegion_name,
+                                 region == input$comparatorRegion ~ comparatorRegion_name)) %>% 
+       select(-c(weighted, mean)) %>% 
+       rename_at(c(1,2), .funs=str_to_title)
+   }
   })
+  
+  observe({
+    showNotification("Note - Maps can take a few seconds to load!", type = "warning")
+  })
+  
 } #End server 
 
 shinyApp(ui = ui, server = server)
